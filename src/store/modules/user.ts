@@ -11,7 +11,8 @@ import {
   type UserResult,
   type RefreshTokenResult,
   getLogin,
-  refreshTokenApi
+  refreshTokenApi,
+  getUserInfo
 } from "@/api/user";
 import { useMultiTagsStoreHook } from "./multiTags";
 import { type DataInfo, setToken, removeToken, userKey } from "@/utils/auth";
@@ -79,9 +80,18 @@ export const useUserStore = defineStore("pure-user", {
     async loginByUsername(data) {
       return new Promise<UserResult>((resolve, reject) => {
         getLogin(data)
-          .then(data => {
-            if (data?.success) setToken(data.data);
-            resolve(data);
+          .then(res => {
+            if (res?.success) {
+              // 设置token，注意这里需要构造完整的token对象
+              setToken({
+                accessToken: res.data,
+                expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 设置30天过期
+                refreshToken: res.data
+              });
+              resolve(res);
+            } else {
+              reject(res);
+            }
           })
           .catch(error => {
             reject(error);
@@ -106,6 +116,26 @@ export const useUserStore = defineStore("pure-user", {
             if (data) {
               setToken(data.data);
               resolve(data);
+            }
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
+    },
+    /** 获取用户信息 */
+    async getInfo() {
+      return new Promise<UserResult>((resolve, reject) => {
+        getUserInfo()
+          .then(res => {
+            if (res?.success) {
+              const { username, avatar, roles } = res.data;
+              // 转换角色格式
+              const roleNames = roles.map(role => role.roleNameEn);
+              this.setInfo({ username, avatar, roles: roleNames });
+              resolve(res);
+            } else {
+              reject(res);
             }
           })
           .catch(error => {

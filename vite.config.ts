@@ -1,5 +1,5 @@
-import { getPluginsList } from "./build/plugins";
-import { include, exclude } from "./build/optimize";
+import { getPluginsList } from "@build/plugins";
+import { include, exclude } from "@build/optimize";
 import { type UserConfigExport, type ConfigEnv, loadEnv } from "vite";
 import {
   root,
@@ -7,7 +7,7 @@ import {
   wrapperEnv,
   pathResolve,
   __APP_INFO__
-} from "./build/utils";
+} from "@build/utils";
 
 export default ({ mode }: ConfigEnv): UserConfigExport => {
   const { VITE_CDN, VITE_PORT, VITE_COMPRESSION, VITE_PUBLIC_PATH } =
@@ -56,7 +56,10 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
     },
     define: {
       __INTLIFY_PROD_DEVTOOLS__: false,
-      __APP_INFO__: JSON.stringify(__APP_INFO__)
+      __APP_INFO__: JSON.stringify(__APP_INFO__),
+      "process.env": {},
+      "process.env.NODE_ENV": JSON.stringify(mode),
+      "process.cwd": JSON.stringify("/")
     }
   };
 };

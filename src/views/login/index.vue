@@ -24,6 +24,7 @@ import { ref, toRaw, reactive, watch, computed } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { useStorage } from "@vueuse/core";
 
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
@@ -68,7 +69,10 @@ const onLogin = async (formEl: FormInstance | undefined) => {
     if (valid) {
       loading.value = true;
       useUserStoreHook()
-        .loginByUsername({ username: ruleForm.username, password: "admin123" })
+        .loginByUsername({
+          username: ruleForm.username,
+          password: ruleForm.password
+        })
         .then(res => {
           if (res.success) {
             // 获取后端路由
@@ -81,9 +85,13 @@ const onLogin = async (formEl: FormInstance | undefined) => {
                 })
                 .finally(() => (disabled.value = false));
             });
-          } else {
-            message(t("login.pureLoginFail"), { type: "error" });
           }
+          // 登录失败，显示错误信息
+          message(res.message || t("login.pureLoginFail"), { type: "error" });
+        })
+        .catch(error => {
+          // 处理其他错误（如网络错误等）
+          message(error.message || t("login.pureLoginFail"), { type: "error" });
         })
         .finally(() => (loading.value = false));
     }
@@ -114,12 +122,29 @@ watch(checked, bool => {
 watch(loginDay, value => {
   useUserStoreHook().SET_LOGINDAY(value);
 });
+
+const showConfigDialog = ref(false);
+const serverConfig = useStorage("serverConfig", {
+  baseUrl: "http://localhost",
+  port: 3000
+});
+
+const saveServerConfig = () => {
+  message(t("settings.saveSuccess"), { type: "success" });
+  showConfigDialog.value = false;
+};
 </script>
 
 <template>
   <div class="select-none">
     <img :src="bg" class="wave" />
     <div class="flex-c absolute right-5 top-3">
+      <!-- 添加设置按钮 -->
+      <el-button
+        class="mr-2"
+        :icon="useRenderIcon('ep:setting')"
+        @click="showConfigDialog = true"
+      />
       <!-- 主题 -->
       <el-switch
         v-model="dataTheme"
@@ -342,6 +367,29 @@ watch(loginDay, value => {
         &nbsp;{{ title }}
       </a>
     </div>
+    <!-- 添加配置对话框 -->
+    <el-dialog
+      v-model="showConfigDialog"
+      :title="t('settings.serverConfig')"
+      width="400px"
+    >
+      <el-form :model="serverConfig" label-width="100px">
+        <el-form-item :label="t('settings.baseUrl')">
+          <el-input v-model="serverConfig.baseUrl" />
+        </el-form-item>
+        <el-form-item :label="t('settings.port')">
+          <el-input-number v-model="serverConfig.port" :min="1" :max="65535" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showConfigDialog = false">{{
+          t("common.cancel")
+        }}</el-button>
+        <el-button type="primary" @click="saveServerConfig">
+          {{ t("common.confirm") }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 

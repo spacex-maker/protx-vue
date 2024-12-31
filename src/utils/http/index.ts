@@ -13,11 +13,20 @@ import { stringify } from "qs";
 import NProgress from "../progress";
 import { getToken, formatToken } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
+import { useStorage } from "@vueuse/core";
+
+// 添加服务器配置
+const serverConfig = useStorage("serverConfig", {
+  baseUrl: "http://localhost",
+  port: "8080"
+});
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间
   timeout: 10000,
+  // 动态设置baseURL
+  baseURL: `${serverConfig.value.baseUrl}:${serverConfig.value.port}`,
   headers: {
     Accept: "application/json, text/plain, */*",
     "Content-Type": "application/json",
@@ -61,6 +70,15 @@ class PureHttp {
   private httpInterceptorsRequest(): void {
     PureHttp.axiosInstance.interceptors.request.use(
       async (config: PureHttpRequestConfig): Promise<any> => {
+        // 每次请求前更新baseURL
+        config.baseURL = `${serverConfig.value.baseUrl}:${serverConfig.value.port}`;
+
+        const token = getToken();
+        if (token) {
+          // 设置 Bearer token
+          config.headers["Authorization"] = formatToken(token?.accessToken);
+        }
+
         // 开启进度条动画
         NProgress.start();
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调

@@ -70,7 +70,12 @@ type ResultTable = {
 
 /** 登录 */
 export const getLogin = (data?: object) => {
-  return http.request<UserResult>("post", "/login", { data });
+  return http.request<UserResult>("post", "/manage/manager/login", {
+    data: {
+      username: data.username,
+      password: data.password
+    }
+  });
 };
 
 /** 刷新`token` */
@@ -86,4 +91,9 @@ export const getMine = (data?: object) => {
 /** 账户设置-个人安全日志 */
 export const getMineLogs = (data?: object) => {
   return http.request<ResultTable>("get", "/mine-logs", { data });
+};
+
+/** 获取用户信息 */
+export const getUserInfo = () => {
+  return http.request<UserResult>("get", "/manage/manager/get-by-token");
 };

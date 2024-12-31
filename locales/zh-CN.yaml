@@ -238,3 +238,11 @@ login:
   purePassWordSureReg: 请输入确认密码
   purePassWordDifferentReg: 两次密码不一致!
   purePassWordUpdateReg: 修改密码成功
+settings:
+  serverConfig: 服务器配置
+  baseUrl: 基础路径
+  port: 端口号
+  saveSuccess: 配置保存成功
+common:
+  cancel: 取消
+  confirm: 确定
